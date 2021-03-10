@@ -11,11 +11,12 @@ module Types exposing
     , ServiceInfo
     , emptyServiceDescription
     , Location
+    , Photos
     )
 
 import Dict
 import ISO8601 exposing (Time)
-
+import File exposing (File)
 
 
 -- для списка заявок
@@ -198,4 +199,11 @@ type alias Driver =
     , plateNum : Maybe String
     , isActive : Bool
     , serviceId : Maybe Int
+    }
+
+type alias Photos = 
+    { before : List File  
+    , after : List File
+    , difficult : List File
+    , order : List File
     }

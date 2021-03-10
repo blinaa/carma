@@ -77,7 +77,7 @@ type alias Session =
 
 prefix : String
 prefix =
-    ""
+    "/elm-live"
 
 
 apiLogin : String
@@ -187,6 +187,12 @@ apiCloseService serviceId =
         ++ "/api/v1/service/"
         ++ String.fromInt serviceId
         ++ "/closed"
+
+apiGetPhotos : Int -> String
+apiGetPhotos serviceId =
+    prefix
+        ++ "/api/v1/driver/photo/"
+        ++ String.fromInt serviceId
 
 
 clientMapURL : Int -> String

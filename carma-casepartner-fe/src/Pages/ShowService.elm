@@ -1,10 +1,11 @@
 module Pages.ShowService exposing (Flags, Model, Msg, page)
 
 import Api
+import Bootstrap.Accordion as Accordion
 import Bootstrap.Alert as Alert
 import Bootstrap.Button as Button
 import Bootstrap.Card as Card
-import Bootstrap.Card.Block exposing (titleH3)
+import Bootstrap.Card.Block as Block
 import Bootstrap.Dropdown as Dropdown
 import Bootstrap.Form as Form
 import Bootstrap.Form.Input as Input
@@ -70,10 +71,11 @@ import Types as Types
         , Payment
         , ServiceDescription
         , emptyServiceDescription
+        , Photos
         )
 import Ui
 import Utils exposing (formatTime)
-
+import File
 
 type alias Flags =
     ()
@@ -169,6 +171,8 @@ type alias Model =
     , currentCases : List CurrentCaseInfo
     , typeOfServiceSynonym : Dictionary
     , closingServiceForm : Maybe ClosingServiceForm
+    , photosAccordion : Accordion.State
+    , photos : Photos
     }
 
 
@@ -219,6 +223,7 @@ type Msg
     | UpdateClosingServiceForm ClosingServiceForm
     | CloseService
     | ServiceClosed (Result Http.Error Bool)
+    | PhotosAccordionMsg Accordion.State
 
 
 driverSpinnerSize : String
@@ -303,6 +308,7 @@ init global flags =
       , currentCases = []
       , typeOfServiceSynonym = Dict.empty
       , closingServiceForm = Nothing
+      , photosAccordion = Accordion.initialState
       }
     , navbarCmd
     , Cmd.none
@@ -1177,6 +1183,12 @@ update global msg model =
                             , Cmd.none
                             )
 
+        PhotosAccordionMsg state ->
+            ( { model | photosAccordion = state }
+            , Cmd.none
+            , Cmd.none
+            )
+
 
 subscriptions : Global.Model -> Model -> Sub Msg
 subscriptions global model =
@@ -1185,6 +1197,7 @@ subscriptions global model =
         , Chat.caseReceiver Chat
         , Time.every (commentsUpdateTime * 1000) Tick
         , Time.every (servicesListUpdateSeconds * 1000) UpdateServicesListTick
+        , Accordion.subscriptions model.photosAccordion PhotosAccordionMsg
         ]
 
 
@@ -1564,17 +1577,16 @@ viewCasePanel model serviceId =
                     ]
                 , Grid.row []
                     [ Grid.col []
-                        [ 
-                            let 
-                                shortcutted = 
-                                     case Dict.get c.serviceType model.typeOfServiceSynonym of
-                                        Just v ->
-                                            v
+                        [ let
+                            shortcutted =
+                                case Dict.get c.serviceType model.typeOfServiceSynonym of
+                                    Just v ->
+                                        v
 
-                                        Nothing ->
-                                            c.serviceType
-                            in 
-                            field "Вид помощи" <| text shortcutted
+                                    Nothing ->
+                                        c.serviceType
+                          in
+                          field "Вид помощи" <| text shortcutted
                         , field "Клиент" <| text c.client
                         , field "Телефон клиента" <| a [ A.href ("tel:" ++ c.clientPhone) ] [ text c.clientPhone ]
                         ]
@@ -1665,8 +1677,11 @@ viewCasePanel model serviceId =
                     ]
                 , hr [] []
                 , Grid.row []
-                    [ Grid.col [ Col.attrs [ Spacing.p3 ] ]
-                        [ Form.form [ action "#", onSubmit AddComment ]
+                    [ Grid.col [ Col.attrs [ Spacing.p3, Spacing.mb3Md ] ]
+                        [ div [ class "mb-3" ] 
+                            [ viewPhotosAccordion model
+                            ]
+                        , Form.form [ action "#", onSubmit AddComment ]
                             [ Form.group []
                                 [ Textarea.textarea
                                     [ Textarea.id "comment"
@@ -1923,10 +1938,12 @@ viewServicesList model ccs =
         hideMobile =
             class "d-none d-lg-block"
 
-        dropInProgressDown xs = 
+        dropInProgressDown xs =
             let
-                rule x = x
-            in rule 
+                rule x =
+                    x
+            in
+            rule
     in
     div [ hideMobile ]
         [ header
@@ -2456,3 +2473,52 @@ setPriceRefund n form =
 
         _ ->
             form
+
+
+viewPhotosAccordion : Model -> Html Msg
+viewPhotosAccordion model = 
+    Accordion.config PhotosAccordionMsg
+            |> Accordion.withAnimation
+            |> Accordion.cards
+                [ Accordion.card
+                    { id = "before"
+                    , options = []
+                    , header =
+                        Accordion.header [] <| Accordion.toggle [] [ text "Фото до начала заявки" ]
+                    , blocks = 
+                        [ Accordion.block []
+                            [ Block.text [] [ text "Lorem ipsum etc" ] ]
+                        ]
+                    }
+                , Accordion.card
+                    { id = "after"
+                    , options = []
+                    , header =
+                        Accordion.header [] <| Accordion.toggle [] [ text "Фото после выполнения заявки" ]
+                    , blocks = 
+                        [ Accordion.block []
+                            [ Block.text [] [ text "asdasd" ] ]
+                        ]
+                    }
+                , Accordion.card
+                    { id = "difficult"
+                    , options = []
+                    , header =
+                        Accordion.header [] <| Accordion.toggle [] [ text "Фото сложностей" ]
+                    , blocks = 
+                        [ Accordion.block []
+                            [ Block.text [] [ text "asdasd" ] ]
+                        ]
+                    }
+                , Accordion.card
+                    { id = "order"
+                    , options = []
+                    , header =
+                        Accordion.header [] <| Accordion.toggle [] [ text "Заказ-наряд" ]
+                    , blocks = 
+                        [ Accordion.block []
+                            [ Block.text [] [ text "asdasd" ] ]
+                        ]
+                    }
+                ]
+            |> Accordion.view model.photosAccordion
