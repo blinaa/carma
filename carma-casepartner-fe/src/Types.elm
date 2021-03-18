@@ -15,7 +15,6 @@ module Types exposing
     )
 
 import Dict
-import File exposing (File)
 import ISO8601 exposing (Time)
 
 
